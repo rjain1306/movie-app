@@ -7,13 +7,23 @@ import InputTextField from "../components/inputTextField";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "./styles/signup.css";
+import axios from "axios";
 
 const SignUp = () => {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 600px)");
   const validationSchema = yup.object({
     email: yup.string().email("Please enter the valid email").required("Please enter the email"),
-    password: yup.string().required("Please enter the password"),
+    name: yup.string().required("Please enter the name"),
+    password: yup
+      .string()
+      .required("Please enter the password")
+      .min(5, "Password must be at least 5 characters")
+      .max(20, "Password must be at most 20 characters")
+      .matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{5,20}$/,
+        "Password must contain at least one lowercase letter, one uppercase letter, and one number"
+      ),
     confirmPassword: yup
       .string()
       .oneOf(
@@ -26,26 +36,50 @@ const SignUp = () => {
   const formik = useFormik({
     initialValues: {
       email: "",
+      name: "",
       password: "",
       confirmPassword: "",
     },
     validationSchema: validationSchema,
-    onSubmit: (values) => {
-      console.log("Signup data:", values);
-      toast.success("Account created successfully, please login here", {
-        position: "top-right",
-        autoClose: 3000, // 3 seconds
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        style: {
-          borderRadius: "10px",
-          margin: isMobile ? "20px" : "0px",
-        },
-      });
-      navigate("/");
+    onSubmit: async (values) => {
+      try {
+        const response = await axios.post("http://localhost:3000/auth/signup", {
+          emailAddress: values.email,
+          name: values.name,
+          password: values.password,
+          passwordConfirm: values.confirmPassword,
+        });
+
+        toast.success("Account created successfully, please login here", {
+          position: "top-right",
+          autoClose: 3000, // 3 seconds
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          style: {
+            borderRadius: "10px",
+            margin: isMobile ? "20px" : "0px",
+          },
+        });
+        navigate("/");
+      } catch (error) {
+        toast.error(error?.response?.data?.message, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          style: {
+            borderRadius: "10px",
+            margin: isMobile ? "20px" : "0px",
+            textTransform: "capitalize",
+          },
+        });
+      }
     },
   });
 
@@ -56,6 +90,17 @@ const SignUp = () => {
           Sign up
         </Typography>
         <form onSubmit={formik.handleSubmit} className="signup-form">
+          <InputTextField
+            placeholder="Name"
+            type="text"
+            size="small"
+            required
+            {...formik.getFieldProps("name")}
+          />
+          {formik.touched.name && formik.errors.name && (
+            <Typography color="red">{formik.errors.name}</Typography>
+          )}
+
           <InputTextField
             placeholder="Email"
             type="email"

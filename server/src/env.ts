@@ -45,5 +45,6 @@ export const env = {
   },
   appSetting: {
     appBaseUrl: getOsEnv('APP_BASE_URL'),
+    appBaseUrlOrigin: getOsEnv('BASE_APP_URL_ORIGIN'),
   },
 };

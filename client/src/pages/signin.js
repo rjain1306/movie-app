@@ -7,6 +7,8 @@ import { useFormik } from "formik";
 import * as yup from "yup";
 import { toast } from "react-toastify";
 import "./styles/signin.css";
+import axios from "axios";
+import Cookies from "js-cookie";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -23,23 +25,52 @@ const SignIn = () => {
       rememberMe: false,
     },
     validationSchema: validationSchema,
-    onSubmit: (values) => {
-      // You can perform login logic here
-      console.log("Login data:", values);
-      toast.success("Account created successfully!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        style: {
-          borderRadius: "10px",
-          margin: isMobile ? "20px" : "0px",
-        },
-      });
-      navigate("/movie/list");
+    onSubmit: async (values) => {
+      try {
+        const response = await axios.post(
+          "http://localhost:3000/auth/login",
+          {
+            emailAddress: values.email,
+            password: values.password,
+          },
+          {
+            withCredentials: true,
+            credentials: "include",
+          }
+        );
+
+        console.log("JWt", Cookies.get("jwt"));
+
+        toast.success("Account created successfully!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          style: {
+            borderRadius: "10px",
+            margin: isMobile ? "20px" : "0px",
+          },
+        });
+        navigate("/movie/list");
+      } catch (error) {
+        toast.error(error?.response?.data?.message, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          style: {
+            borderRadius: "10px",
+            margin: isMobile ? "20px" : "0px",
+            textTransform: "capitalize",
+          },
+        });
+      }
     },
   });
 
