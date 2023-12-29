@@ -7,6 +7,7 @@ export class AwsFilesService {
   constructor() {}
 
   async uploadFile(dataBuffer: Buffer, filename: string): Promise<any> {
+    console.log("bucket name : ", env.awsS3.bucketName);
     const s3 = new S3();
     const uploadResult = await s3
       .upload({

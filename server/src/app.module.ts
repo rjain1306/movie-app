@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import { UsersModule } from './users/users.module';
 import { AuthMiddleware } from './utils/auth/middlewares/auth-middleware';
 import { AuthModule } from './utils/auth/auth.module';
+import { MovieModule } from './movie/movie.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AuthModule } from './utils/auth/auth.module';
     }),
     TypeDataModule,
     UsersModule,
+    MovieModule,
     DatabaseModule,
   ],
   controllers: [],

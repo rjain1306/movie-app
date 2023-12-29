@@ -3,8 +3,6 @@ export class ListApiQueryDto {
   skip = 0;
   take = 10;
 
-  include: string[] = null;
-
   sortBy: string = null;
 
   sortDir: 'ASC' | 'DESC' = 'ASC';

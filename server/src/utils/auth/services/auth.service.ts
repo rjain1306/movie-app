@@ -117,7 +117,7 @@ export class AuthService {
             throw new BadRequestException('invalid credentials');
         }
 
-        const jwt = await this.jwtService.signAsync({id: user.id});
+        const jwt = await this.jwtService.signAsync({id: user.id, sub: user.id, userName: user.name});
 
         this._logger.info(
             `Successfully created User with Email: ${model.emailAddress}.`,

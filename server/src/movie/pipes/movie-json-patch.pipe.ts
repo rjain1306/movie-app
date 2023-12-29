@@ -1,30 +1,23 @@
 import { JsonPatchValidationPipe } from '../../core/pipes/json-patch-validation-pipe';
 import { BadRequestException, PipeTransform } from '@nestjs/common';
 
-import { UserEnum } from '../../core/enums/database-validation-enums';
+import { MovieEnum } from '../../core/enums/database-validation-enums';
 import { WinstonLogger } from '../../utils/logger';
-import { UserErrorCodes } from '../error-codes';
+import { MovieErrorCodes } from '../error-codes';
 
-export class UserJsonPatchPipe implements PipeTransform {
+export class MovieJsonPatchPipe implements PipeTransform {
   private logger: WinstonLogger = new WinstonLogger();
 
   readonly validPath = [
-    UserEnum.FIRST_NAME,
-    UserEnum.LAST_NAME,
-    UserEnum.EMAIL_ADDRESS,
-    UserEnum.PASSWORD,
-    UserEnum.PHONE_NUMBER,
+    MovieEnum.TITLE,
+    MovieEnum.PUBLISH_YEAR
   ];
 
-  readonly optionalField = [UserEnum.PHONE_NUMBER];
-
-  readonly isEmail = [UserEnum.EMAIL_ADDRESS];
-
-  readonly isPassword = [UserEnum.PASSWORD];
+  readonly isString = [MovieEnum.TITLE, MovieEnum.PUBLISH_YEAR];
 
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  public userJsonValidation(bodyData) {
+  public movieJsonValidation(bodyData) {
     if (!bodyData || !bodyData.length) {
       throw new BadRequestException(
         'Validation failed, Body should be an array of objects',
@@ -38,22 +31,8 @@ export class UserJsonPatchPipe implements PipeTransform {
       );
       JsonPatchValidationPipe.toValidateOp(data.op);
 
-      if (this.optionalField.includes(path)) {
-        if (data.value === null || data.value === '') {
-          data.value = null;
-          return;
-        }
-      }
+      // to do..
 
-      if (this.isEmail.includes(path)) {
-        JsonPatchValidationPipe.toValidateEmail(data.value, path);
-      } else {
-        JsonPatchValidationPipe.toValidateValue(
-          data.value,
-          path,
-          this.optionalField.includes(path),
-        );
-      }
     });
     return bodyData;
   }
@@ -62,12 +41,12 @@ export class UserJsonPatchPipe implements PipeTransform {
   async transform(bodyData: any) {
     this.logger.setScope(__filename);
     try {
-      return await this.userJsonValidation(bodyData);
+      return await this.movieJsonValidation(bodyData);
     } catch (e) {
       this.logger.error(
         `Error in executing patch for Application.\n Message: ${e.message}`,
         e.stack,
-        UserErrorCodes.ErrUserUpdate,
+        MovieErrorCodes.ErrMovieUpdate,
       );
       throw new BadRequestException(e.response);
     }
