@@ -81,7 +81,7 @@ export class UserRepository implements IUserRepository {
 
   /**
    * Save User detail
-   * @param invitation
+   * @param user
    * @returns
    */
   public async saveUser(user: User): Promise<User> {

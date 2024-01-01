@@ -193,7 +193,7 @@ export class MovieService {
       }
 
       if (!file) {
-        objMovie.setMovieImage(null, reqUser.userId);
+        objMovie.setMovieImage(null);
       } else {
         const fileExtension = file.originalname.substring(
           file.originalname.lastIndexOf('.'),
@@ -204,7 +204,7 @@ export class MovieService {
           `${uuid()}${fileExtension}`,
         );
 
-        objMovie.setMovieImage(uploadResult.Location, reqUser.userId);
+        objMovie.setMovieImage(uploadResult.Location);
       }
 
       const savedMovie = await this._movieRepository.saveMovie(objMovie);

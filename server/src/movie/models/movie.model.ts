@@ -9,6 +9,7 @@ import { AuditInfo } from '../../core/domain';
 
 @Entity({
   schema: 'public',
+  name: 'movie',
 })
 export class Movie extends BaseEntity {
   @PrimaryColumn({
@@ -95,9 +96,8 @@ export class Movie extends BaseEntity {
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  public setMovieImage(imageUrl: string, modifiedBy: string = '') {
+  public setMovieImage(imageUrl: string) {
     this._imageUrl = imageUrl;
-    this._auditInfo.setUpdated(modifiedBy);
   }
 
 }
