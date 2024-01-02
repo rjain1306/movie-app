@@ -14,6 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Delete,
+  Get,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -44,6 +45,35 @@ export class MovieController extends BaseController {
 
   constructor(private _movieService: MovieService) {
     super();
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthorizedUserGuard)
+  @ApiOperation({ summary: 'List Movie' })
+  @Get()
+  async getMovieList(
+    @Param('skip') skip: number,
+    @Param('take') take: number,
+  ) {
+    const query = {
+      skip,
+      take
+    }
+    return this.getResult(
+      await this._movieService.getMovie(query),
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthorizedUserGuard)
+  @ApiOperation({ summary: 'Get Movie by Id' })
+  @Get('movie/:movieId')
+  async getMovieById(
+    @Param('movieId') movieId: string
+  ) {
+    return this.getResult(
+      await this._movieService.getMovieById(movieId)
+    );
   }
 
   @ApiBearerAuth()

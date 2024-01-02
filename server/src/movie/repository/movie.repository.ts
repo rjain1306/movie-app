@@ -80,22 +80,22 @@ export class MovieRepository implements IMovieRepository {
    * @returns
    */
    public async getAllMovies(query?: ListApiQueryDto ): Promise<[Movie[], number]> {
-
-    const sortBy = query.sortBy
+    console.log("query: ", query)
+    const sortBy = query?.sortBy
       ? `movie._${query.sortBy}`
       : 'movie._auditInfo._createdAt';
 
-    const sortDir = query.sortBy ? query.sortDir : 'DESC';
+    const sortDir = query?.sortBy ? query.sortDir : 'DESC';
 
     let queryable = this._movieRepository
       .createQueryBuilder('movie')
       
-    if (query.searchTerm) {
+    if (query?.searchTerm) {
       queryable = queryable.andWhere(
         // eslint-disable-next-line quotes
         "(movie.title ILIKE :searchTerm OR appuser.publishYear ILIKE :searchTerm)",
         {
-          searchTerm: `%${query.searchTerm}%`,
+          searchTerm: `%${query?.searchTerm}%`,
         },
       );
     }
