@@ -77,6 +77,37 @@ export class MovieController extends BaseController {
   }
 
   @ApiBearerAuth()
+  @UseGuards(AuthorizedUserGuard)
+  @ApiOperation({ summary: 'update Movie' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    type: MovieDisplayModel,
+  })
+  @HttpCode(201)
+  @Post('movie/:movieId')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  async updateMovie(
+    @Body() data: AddMovieModel,
+    @Param('movieId') movieId: string,
+    //eslint-disable-next-line no-undef 
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<MovieDisplayModel | BaseError> {
+    return this.getResult(await this._movieService.updateMovie(movieId, data, file));
+  }
+
+  @ApiBearerAuth()
   @UseGuards(BasicAuthGuard)
   @ApiOperation({ summary: 'Updates movie Image.' })
   @ApiResponse({

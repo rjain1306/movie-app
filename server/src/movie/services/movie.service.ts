@@ -129,6 +129,81 @@ export class MovieService {
     }
   }
 
+   /**
+   * Update movie
+   */
+   async updateMovie(
+    movieId: string,
+    model: AddMovieModel,
+    file: any,
+  ): Promise<MovieDisplayModel | BaseError> { 
+    try {
+      this._logger.info(
+        `Executing update Movie with Payload: ${JSON.stringify(model)}.`,
+      );
+
+      const movieObj = await this._movieRepository.getById(
+        movieId, 
+      );
+
+      if (movieObj === null) {
+        return new ErrorItemNotFound(
+          MovieResourceNames.MovieNameSingular,
+          MovieErrorCodes.ErrMovieNotFound,
+          movieId,
+        );
+      }
+
+      // aws s3 --> image put operation.
+      if (!file) {
+        // return error
+      } else {
+        const fileExtension = file.originalname.substring(
+          file.originalname.lastIndexOf('.'),
+        );
+
+        const uploadResult = await this._awsFileService.uploadFile(
+          file.buffer,
+          `${uuid()}${fileExtension}`,
+        );
+
+        movieObj.update(model.title, model.publishYear, uploadResult.Location);
+      }
+
+      const updatedMovie = await this._movieRepository.saveMovie( 
+        movieObj,
+      );
+
+      if (updatedMovie === null) { 
+        this._logger.info(
+          `Failed to update movie data in db for title: ${model.title}.`,
+        );
+
+        return new ErrorUpdatingItem(
+          MovieResourceNames.MovieNameSingular,
+          MovieErrorCodes.ErrMovieUpdate,
+          movieId,
+        );
+      }
+
+      const displayModel = this.mapper.map(updatedMovie, Movie, MovieDisplayModel);
+
+      this._logger.info(
+        `Successfully updated Movie with title: ${model.title}.`,
+      );
+
+      return displayModel;
+    } catch (ex) {
+      const error = new ErrorUpdatingItem(
+        MovieResourceNames.MovieNameSingular,
+        MovieErrorCodes.ErrMovieUpdate,
+        movieId,
+        ex,
+      );
+      this._logger.error(error.loggingDescriptor.logMessage, ex);
+      return error;
+    }
+  }
 
   /**
    * Delete movie
