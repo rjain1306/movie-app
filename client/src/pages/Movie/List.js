@@ -4,78 +4,28 @@ import {
   Card,
   CardContent,
   CardMedia,
-  Button,
-  CardActions,
   IconButton,
   useMediaQuery,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useNavigate } from "react-router-dom";
 import Layout from "../../components/layout";
-import MovieImg1 from "../../assets/images/movie_img_1.png";
-import MovieImg2 from "../../assets/images/movie_img_2.png";
-import MovieImg3 from "../../assets/images/movie_img_3.png";
 import { useEffect, useState } from "react";
 import ControlPointIcon from "@mui/icons-material/ControlPoint";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
-
-const buttonStyle = {
-  color: "white",
-  textTransform: "none",
-  marginTop: "10px",
-  fontWeight: 700,
-  borderRadius: "10px",
-};
+import LogoutIcon from '@mui/icons-material/Logout';
+import { Pagination, Stack } from '@mui/material';
+import Logout from "../Logout";
+import "../styles/home.css"
 
 const ListMovie = () => {
   const navigate = useNavigate();
-  const [movieData, setMovieData] = useState();
+  const [movieData, setMovieData] = useState([]);
   const isMobile = useMediaQuery("(max-width: 600px)");
-  const goToCreate = () => {
-    navigate("/movie/create");
-  };
-
-  const goToEdit = () => {
-    navigate("/movie/edit");
-  };
-
-  const handleLogout = async () => {
-    try {
-      const response = await axios.post("http://localhost:3000/auth/logout");
-      toast.success("Logged Out successfully!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        style: {
-          borderRadius: "10px",
-          margin: isMobile ? "20px" : "0px",
-        },
-      });
-      Cookies.remove("jwt");
-      navigate("/");
-    } catch (error) {
-      toast.error(error?.response?.data?.message, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        style: {
-          borderRadius: "10px",
-          margin: isMobile ? "20px" : "0px",
-          textTransform: "capitalize",
-        },
-      });
-    }
-  };
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 1;
 
   const dummyData = [
     {
@@ -110,11 +60,85 @@ const ListMovie = () => {
       movieName: "Movie 1",
       movieVersion: "2021",
     },
-  ];
+    {
+      movieName: "Movie 1",
+      movieVersion: "2021",
+    },
+    {
+      movieName: "Movie 1",
+      movieVersion: "2021",
+    },
+    {
+      movieName: "Movie 1",
+      movieVersion: "2021",
+    },
+    {
+      movieName: "Movie 1",
+      movieVersion: "2021",
+    },
 
-  useEffect(() => {
-    //Call movie list api
-  }, []);
+    {
+      movieName: "Movie 1",
+      movieVersion: "2021",
+    },
+    {
+      movieName: "Movie 1",
+      movieVersion: "2021",
+    },
+    {
+      movieName: "Movie 1",
+      movieVersion: "2021",
+    },
+    {
+      movieName: "Movie 1",
+      movieVersion: "2021",
+    },
+  ];
+  
+  // const startIndex = (page - 1) * itemsPerPage;
+  // const endIndex = startIndex + itemsPerPage;
+  // const displayedItems = movieData.slice(startIndex, endIndex);
+
+  const handleChange = (event, value) => {
+    setPage(value);
+  };
+
+
+  const goToCreate = () => {
+    navigate("/movie/create");
+  };
+
+  const goToEdit = (movieId) => {
+    navigate(`/movie/edit/${movieId}`);
+  };
+
+  const getMovieData = async(currentPage) => {
+    const token = Cookies.get("jwt");
+    try {
+      const response = await axios.get(
+        `http://localhost:3000/movies?skip=${(currentPage - 1) * 10}&take=${itemsPerPage}`,
+        {
+          headers: { authorization: `Bearer ${token}` },
+        }
+      );
+
+      console.log("response: ", response?.data?.[0])
+      if(response?.data?.[0]) {
+        setMovieData(response?.data?.[0])
+      } else {
+        setMovieData([])
+      }
+     
+    } catch (error) {
+     console.log("error: ", error)
+    }
+  }
+
+
+  // useEffect(() => {
+  //   //Call movie list api
+  //   getMovieData(page);
+  // }, [page]);
 
   return (
     <Layout>
@@ -124,24 +148,25 @@ const ListMovie = () => {
             item
             sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
           >
-            <Typography color="primary.light">My Movies</Typography>
+            <Typography color="primary.light" sx={{ fontSize: "48px" }}>My Movies</Typography>
 
             <IconButton color="primary.light" onClick={goToCreate}>
               <ControlPointIcon />
             </IconButton>
           </Grid>
 
-          <Grid item>
-            <Typography color="primary.light" style={{ cursor: "pointer" }} onClick={handleLogout}>
-              Logout
-            </Typography>
+          <Grid 
+            item
+            sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+          >
+            <Logout/>
           </Grid>
         </Grid>
       </Box>
 
-      <Box sx={{ maxWidth: "100%", display: "flex", justifyContent: "center", padding: "0% 10%" }}>
+      <Box sx={{ maxWidth: "100%", display: "flex", justifyContent: "center", padding: "0% 10%", paddingBottom: "10%" }}>
         <Grid container spacing={2}>
-          {dummyData.map((movie) => {
+          {movieData && movieData.length > 0 ? (movieData.map((movie) => {
             return (
               <Grid item lg={3}>
                 <Card
@@ -153,31 +178,52 @@ const ListMovie = () => {
                     borderRadius: "10px",
                     cursor: "pointer",
                   }}
-                  onClick={goToEdit}
+                  onClick={goToEdit(movie._id)}
                 >
                   <CardMedia
                     component="img"
                     alt="Movie img 1"
                     height={240}
                     width={50}
-                    image={MovieImg1}
+                    image={movie._imageUrl}
                     sx={{ borderRadius: "10px", padding: "2%", margin: "3%", width: "238px" }}
                   ></CardMedia>
 
                   <CardContent>
                     <Typography gutterBottom variant="h5" component="div" color="primary.light">
-                      {movie.movieName}
+                      {movie._title}
                     </Typography>
                     <Typography variant="body2" color="primary.light">
-                      {movie.movieName}
+                      {movie._publishYear}
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
             );
-          })}
+          })) : (
+            <Box className="container">
+              <Typography variant={isMobile ? "h3" : "h2"} className="message">
+                Your movie list is empty
+              </Typography>
+            </Box>
+          )}
         </Grid>
       </Box>
+
+      {movieData && movieData.length > 0 && 
+        <Box 
+          sx={{ maxWidth: "100%", display: "flex", justifyContent: "center", padding: "0% 10%", paddingBottom: "20%" }}
+        >
+          <Stack spacing={2} mt={2}>
+            <Pagination 
+              shape="rounded" 
+              count={Math.ceil(movieData.length / itemsPerPage)}
+              page={page}
+              onChange={handleChange}
+            />
+          </Stack>
+        </Box>
+      }
     </Layout>
   );
 };
