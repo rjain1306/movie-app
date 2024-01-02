@@ -1,236 +1,157 @@
-
-import { Box, Typography, Card, CardContent, CardMedia, Button, CardActions, TextField } from "@mui/material";
-import Grid from '@mui/material/Grid';
-import Layout from "../../components/layout";
-import InputTextField from "../../components/inputTextField";
-import { useNavigate } from "react-router-dom";
-import Logout from "../Logout";
-import { toast } from "react-toastify";
-import axios from "axios";
-import { useMediaQuery } from "@mui/material";
-import { useState } from "react";
-import Cookies from "js-cookie";
-
-const CreateMovie = () => {
-    const navigate = useNavigate();
-    const isMobile = useMediaQuery("(max-width: 600px)");
-    const [newMovie, setNewMovie] = useState({
-        publishYear: "",
-        title: "",
-    });
-    const [fileData, setFileData] = useState("");
-    const [error, setError] = useState();
+import {
+    Box,
+    Typography,
+    Card,
+    CardContent,
+    CardMedia,
+    IconButton,
+    useMediaQuery,
+  } from "@mui/material";
+  import Grid from "@mui/material/Grid";
+  import { useNavigate } from "react-router-dom";
+  import Layout from "../../components/layout";
+  import { useEffect, useState } from "react";
+  import ControlPointIcon from "@mui/icons-material/ControlPoint";
+  import axios from "axios";
+  import Cookies from "js-cookie";
+  import { Pagination, Stack } from '@mui/material';
+  import Logout from "../Logout";
+  import "../styles/home.css"
   
-    const onHandleChange = (event) => {
-        const { name, value } = event.target;
-        setNewMovie({
-            ...newMovie,
-            [name]: value,
-        });
-        setError({});
-    }
-
-    const handleFileChange = (event) => {
-        console.log("file event: ", event.target.files[0], newMovie)
-        const file = event.target.files[0];
-        setFileData(file)
-    }
-
-
-    const saveMovie = async () => {
-        const isvalidate = validations();
-
-        if (isvalidate) {
-            const formData = new FormData();
-            formData.append("title", newMovie.title)
-            formData.append("publishYear", newMovie.publishYear);
-            formData.append("file", fileData);
-            
-            const token = Cookies.get("jwt");
-            try {
-                const response = await axios.post(
-                    "http://localhost:3000/movies/movie",
-                    formData,
-                    {
-                        headers: { 
-                            'authorization': `Bearer ${token}`,
-                            'Content-Type': 'multipart/form-data',
-                        },
-                        
-                    },
-                );
-                
-                if (response.status === 201 && response.statusText === "Created") {
-                    goToMovieList();
-                    toast.success("Movie created successfully", {
-                        position: "top-right",
-                        autoClose: 3000, // 3 seconds
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                        style: {
-                          borderRadius: "10px",
-                          margin: isMobile ? "20px" : "0px",
-                        },
-                    });
-                }
-            } catch (error) {
-                console.log("error: ", error)
-            }
-        }
-    }
-
-    const validations = () => {
-        let errors = {};
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    
-        if (newMovie?.publishYear !== "") {
-          errors = { ...errors };
-        } else {
-          errors = { ...errors, publishYear: "Please enter publish year." };
-        }
-        if (newMovie?.title !== "") {
-          errors = { ...errors };
-        } else {
-          errors = { ...errors, title: "Please enter title." };
-        }
-        if (fileData === undefined || !allowedTypes.includes(fileData?.type) ) {
-            errors = { ...errors, fileData: "Please select a valid image file (JPEG, PNG)." };
-        } 
-
-        setError((error) => ({ ...error, ...errors }));
-        if (Object.keys(errors).length === 0) {
-          return true;
-        } else {
-          return false;
-        }
+  const ListMovie = () => {
+    const navigate = useNavigate();
+    const [movieData, setMovieData] = useState([]);
+    const isMobile = useMediaQuery("(max-width: 600px)");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const itemsPerPage = 8;
+  
+    const handleChange = (event, value) => {
+      setCurrentPage(value);
     };
-     
-    const goToMovieList = () => {
-        navigate("/movie/list")
+  
+  
+    const goToCreate = () => {
+      navigate("/movie/create");
+    };
+  
+    const goToEdit = (movieId) => {
+      navigate(`/movie/edit/${movieId}`);
+    };
+  
+    const getMovieData = async() => {
+      const token = Cookies.get("jwt");
+      try {
+        const response = await axios.get(
+          `http://localhost:3000/movies?skip=${(currentPage - 1) * itemsPerPage}&take=${itemsPerPage}`,
+          {
+            headers: { authorization: `Bearer ${token}` },
+          }
+        );
+  
+        if(response?.data?.items.length > 0) {
+          setMovieData(response?.data?.items)
+        } else {
+          setMovieData([])
+        }
+        setTotalPages(response.data.totalPages);
+      } catch (error) {
+       console.log("error: ", error)
+      }
     }
-
-    return(
-        <Layout>
-            <Box sx={{ maxWidth: "100%",padding: "3% 10%" }}>
-                <Grid
-                    container
-                    sx={{ display: "flex", justifyContent:"space-between" }}
-                >
-                    <Grid
-                        item
-                    >
-                        <Typography sx={{ color: "primary.light", fontSize: "48px" }}>Create a new movie</Typography>
-                    </Grid>
-
-                    <Grid
-                        item
-                        sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                    >
-                        <Logout/>
-                    </Grid>
+  
+    useEffect(() => {
+      //Call movie list api
+      getMovieData();
+    }, [currentPage]);
+  
+    return (
+      <Layout>
+        <Box sx={{ maxWidth: "100%", padding: "3% 10%" }}>
+          <Grid container sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Grid
+              item
+              sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+            >
+              <Typography color="primary.light" sx={{ fontSize: "48px" }}>My Movies</Typography>
+  
+              <IconButton color="primary.light" onClick={goToCreate}>
+                <ControlPointIcon style={{ color: "#FFFFFF" }}/>
+              </IconButton>
+            </Grid>
+  
+            <Grid 
+              item
+              sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+            >
+              <Logout/>
+            </Grid>
+          </Grid>
+        </Box>
+  
+        <Box sx={{ maxWidth: "100%", display: "flex", justifyContent: "center", padding: "0% 10%", paddingBottom: "10%" }}>
+          <Grid container spacing={2}>
+            {movieData && movieData.length > 0 ? (movieData.map((movie) => {
+              return (
+                <Grid item lg={3}>
+                  <Card
+                    sx={{
+                      boxShadow: "none",
+                      borderRadius: "0px",
+                      textAlign: "left",
+                      background: "#092C39",
+                      borderRadius: "10px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => goToEdit(movie.id)}
+                  >
+                    <CardMedia
+                      component="img"
+                      alt="Movie img 1"
+                      height={240}
+                      width={50}
+                      image={movie.imageUrl}
+                      sx={{ borderRadius: "10px", padding: "2%", margin: "3%", width: "238px" }}
+                    ></CardMedia>
+  
+                    <CardContent>
+                      <Typography gutterBottom variant="h5" component="div" color="primary.light">
+                        {movie.title}
+                      </Typography>
+                      <Typography variant="body2" color="primary.light">
+                        {movie.publishYear}
+                      </Typography>
+                    </CardContent>
+                  </Card>
                 </Grid>
-            </Box>
-
-            <Box sx={{ maxWidth: "100%", padding: "3% 10%", paddingBottom: "20%" }}>
-               
-                    <Grid
-                        container
-                        sx={{ display: "flex", justifyContent:"space-between"}}
-                    >
-                        <Grid item sx={{ width: "43%" }}>
-                            {error?.fileData && <p style={{ color: 'red' }}>{error?.fileData}</p>}
-                            <input
-                                id="file-upload"
-                                type="file"
-                                style={{ display: "none" }}
-                                onChange={handleFileChange}
-                            />
-
-                            <label
-                                htmlFor="file-upload"
-                            >
-                                <Box
-                                    sx={{ background: "linear-gradient(0deg, #224957, #224957)", display: "flex", justifyContent:"center", alignItems: "center", border: "2px solid #FFFFFF", borderRadius: "10px", borderStyle: "dashed", padding: "10%", height:"25vw" }}
-                                > 
-                                    <Box>
-                                        { !fileData &&
-                                            <Typography sx={{ color: "primary.light"}}>Drop an image here</Typography>
-                                        }
-                                    </Box>
-                                    { fileData ? 
-                                        <img src={URL.createObjectURL(fileData)}  style={{ maxWidth: '100%', height: '100%' }} alt="Selected Image" /> :
-                                        <></>
-                                    }
-                                </Box>
-                            </label>
-                        </Grid>
-
-                        <Grid 
-                            item
-                        >
-                            <Box>
-                                <InputTextField 
-                                    placeholder="Title"
-                                    name="publishYear"
-                                    required
-                                    error={error?.publishYear ? true : false}
-                                    onChange={onHandleChange}
-                                    helperText={error?.publishYear ? error?.publishYear : ""}
-                                />
-                                
-                                <InputTextField 
-                                    placeholder="Publishing year"
-                                    name="title"
-                                    required
-                                    error={error?.title ? true : false}
-                                    onChange={onHandleChange}
-                                    helperText={error?.title ? error?.title : ""}
-                                />
-                            </Box>
-
-                            <Box sx={{ display: "flex", justifyContent:"space-between", marginTop: "20px" }}>
-                                <Button
-                                    sx={{
-                                        width: "179px",
-                                        height: "56px",
-                                        padding: "16px, 59px, 16px, 59px",
-                                        borderRadius: "10px",
-                                        border: "1px solid #FFFFFF",
-                                        color: "#FFFFFF",
-                                    }}
-                                    onClick={goToMovieList}
-                                >
-                                    Cancel
-                                </Button>
-
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    sx={{
-                                        width: "179px",
-                                        height: "56px",
-                                        padding: "16px, 59px, 16px, 59px",
-                                        borderRadius: "10px",
-                                        background: "#2BD17E",
-                                        "&:hover": {
-                                            background: "#77d0a3",
-                                        }
-                                    }}
-                                    onClick={saveMovie}
-                                >
-                                    Submit
-                                </Button>
-
-                            </Box>
-                        </Grid>
-                    </Grid>
-                
-            </Box>
-        </Layout>
-    )
-}
-
-export default CreateMovie;
+              );
+            })) : (
+              <Box className="container">
+                <Typography variant={isMobile ? "h3" : "h2"} className="message">
+                  Your movie list is empty
+                </Typography>
+              </Box>
+            )}
+          </Grid>
+        </Box>
+  
+        {movieData && movieData.length > 0 && 
+          <Box 
+            sx={{ maxWidth: "100%", display: "flex", justifyContent: "center", padding: "0% 10%", paddingBottom: "20%" }}
+          >
+            <Stack spacing={2} mt={2}>
+              <Pagination 
+                shape="rounded" 
+                count={totalPages}
+                page={currentPage}
+                onChange={handleChange}
+              />
+            </Stack>
+          </Box>
+        }
+      </Layout>
+    );
+  };
+  
+  export default ListMovie;
+  
