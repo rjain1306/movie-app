@@ -21,7 +21,8 @@ import {
   ErrorItemNotFound,
   ErrorCreatingItem,
   ErrorDeletingItem,
-  ErrorUpdatingItem
+  ErrorUpdatingItem,
+  ErrorListingItem
 } from '../../core/error-codes';
 
 import {
@@ -29,12 +30,15 @@ import {
   MovieDisplayModel,
 } from '../dto';
 import {
+  ListApiQueryDto,
   ReqUserModel,
 } from '../../core/dto';
 import { AwsFilesService } from '../../utils/aws/s3/aws-file.service';
 import { v4 as uuid } from 'uuid';
 import { AddMovieValidator } from '../validators/add-movie-validator';
 import * as bcrypt from 'bcrypt';
+import { PagedCollection } from 'src/utils/pagination';
+import { MovieMapperProfile } from '../mappings/movie-mapper-profile';
 
 @Injectable()
 export class MovieService {
@@ -319,25 +323,80 @@ export class MovieService {
     }
   }
 
-  async getMovie(query: any) {
+  async getMovie(query: ListApiQueryDto) {
     try {
-      const movieData = await this._movieRepository.getAllMovies(query);
+      this._logger.info(`Executing get all movies by payload: ${query}.`);
+      const [movies, count] = await this._movieRepository.getAllMovies(query);
+      if (count <= 0) {
+        return new PagedCollection<MovieDisplayModel>(
+          query.skip,
+          query.take,
+          count,
+          [],
+        );
+      }
 
-      return movieData;
-    } catch(error) {
-      console.log("error:", error)
+      const displayModel = this.mapper.mapArray(
+        movies,
+        Movie,
+        MovieDisplayModel,
+      );
+
+      this._logger.info(
+        `Successfully fetched list of movies.`,
+      );
+
+      return new PagedCollection<MovieDisplayModel>(
+        query.skip,
+        query.take,
+        count,
+        displayModel,
+      );
+    } catch(ex) {
+      console.log("error:", ex)
+      const error = new ErrorListingItem(
+        MovieResourceNames.MovieNameSingular,
+        MovieErrorCodes.ErrMovieList,
+        null,
+        ex,
+      );
+      this._logger.error(error.loggingDescriptor.logMessage, ex);
+
       return error;
     }
   }
 
-  async getMovieById(id) {
+  async getMovieById(movieId: string): Promise<MovieDisplayModel | BaseError> {
     try {
-      const movieData = await this._movieRepository.getById(id);
+      this._logger.info(`Executing get movie by Id: ${movieId}.`);
+      const movieData = await this._movieRepository.getById(movieId);
 
-      return movieData;
-    } catch(error) {
-      console.log("error:", error)
+      if(movieData === null) {
+        return new ErrorItemNotFound(
+          MovieResourceNames.MovieNameSingular,
+          MovieErrorCodes.ErrMovieNotFound,
+          movieId,
+        );
+      }
+      const displayModel = this.mapper.map(
+        movieData,
+        Movie,
+        MovieDisplayModel,
+      );
 
+      this._logger.info(
+        `Successfully found movie for MovieId: ${movieId}`,
+      );
+
+      return displayModel;
+    } catch(ex) {
+      console.log("error:", ex)
+      const error = new ErrorItemNotFound(
+        MovieResourceNames.MovieNameSingular,
+        MovieErrorCodes.ErrMovieNotFound,
+        movieId,
+        ex
+      );
       return error;
     }
   }

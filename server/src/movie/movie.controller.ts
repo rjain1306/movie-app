@@ -1,6 +1,8 @@
 
 import {
+  ApiWrappedCollectionResponse,
   BoolResult,
+  ListApiQueryDto,
   ReqUserModel,
 } from '../core/dto';
 import {
@@ -15,6 +17,7 @@ import {
   UploadedFile,
   Delete,
   Get,
+  Query,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -23,6 +26,7 @@ import {
   ApiBody,
   ApiBearerAuth,
   ApiConsumes,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { BaseController } from '../core/base.controller';
 import { MovieService } from './services/movie.service';
@@ -33,8 +37,10 @@ import {
 import { BaseError } from '../utils/errors/base-error';
 import { GetReqUser } from '../utils/auth/decorators/getReqUser.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { BasicAuthGuard } from 'src/utils/auth/guards/basic-auth-guard';
-import { AuthorizedUserGuard } from 'src/utils/auth/guards/authorized-user-guard';
+import { BasicAuthGuard } from '../utils/auth/guards/basic-auth-guard';
+import { AuthorizedUserGuard } from '../utils/auth/guards/authorized-user-guard';
+import { PaginationSearchTerm, PaginationSkip, PaginationTake } from '../utils/constants/api-query-constant';
+import { ListApiQueryPipe } from '../core/pipes';
 
 @ApiTags('Movie')
 @Controller('movies')
@@ -50,15 +56,14 @@ export class MovieController extends BaseController {
   @ApiBearerAuth()
   @UseGuards(AuthorizedUserGuard)
   @ApiOperation({ summary: 'List Movie' })
+  @ApiWrappedCollectionResponse(MovieDisplayModel)
+  @ApiQuery(PaginationSkip)
+  @ApiQuery(PaginationTake)
+  @HttpCode(200)
   @Get()
   async getMovieList(
-    @Param('skip') skip: number,
-    @Param('take') take: number,
+    @Query(ListApiQueryPipe) query: ListApiQueryDto,
   ) {
-    const query = {
-      skip,
-      take
-    }
     return this.getResult(
       await this._movieService.getMovie(query),
     );
@@ -179,7 +184,7 @@ export class MovieController extends BaseController {
   })
   @HttpCode(200)
   @Delete('movie/:movieId')
-  async deleteUser(
+  async deleteMovie(
     @Param('movieId') movieId: string,
   ): Promise<BoolResult | BaseError> {
     return this.getResult(await this._movieService.deleteMovie(movieId));
