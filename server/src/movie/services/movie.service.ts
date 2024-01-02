@@ -60,7 +60,7 @@ export class MovieService {
   ): Promise<MovieDisplayModel | BaseError> { 
     try {
       this._logger.info(
-        `Executing add Movie with Payload: ${JSON.stringify(model)}.`,
+        `Executing add Movie with Payload: ${JSON.stringify(model)} ${file}.`,
       );
 
       const validateOutcome = AddMovieValidator.Validate(model);
@@ -315,6 +315,29 @@ export class MovieService {
         ex,
       );
       this._logger.error(error.loggingDescriptor.logMessage, ex);
+      return error;
+    }
+  }
+
+  async getMovie(query: any) {
+    try {
+      const movieData = await this._movieRepository.getAllMovies(query);
+
+      return movieData;
+    } catch(error) {
+      console.log("error:", error)
+      return error;
+    }
+  }
+
+  async getMovieById(id) {
+    try {
+      const movieData = await this._movieRepository.getById(id);
+
+      return movieData;
+    } catch(error) {
+      console.log("error:", error)
+
       return error;
     }
   }
