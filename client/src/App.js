@@ -30,7 +30,7 @@ function App() {
             <Route exact path="/home" element={<Home />} />
             <Route exact path="/movie/list" element={<ListMovie />} />
             <Route exact path="/movie/create" element={<CreateMovie />}></Route>
-            <Route exact path="/movie/edit" element={<EditMovie />}></Route>
+            <Route exact path="/movie/edit/:id" element={<EditMovie />}></Route>
           </Routes>
         </Router>
         <ToastContainer
